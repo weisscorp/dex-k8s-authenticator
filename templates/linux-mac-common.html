@@ -42,7 +42,7 @@ EOF</code></pre>
     </div>
   {{ end }}
 
-  {{ if .K8sCaPem }}
+  {{ if and .K8sCaPem (not .K8sCaPemBase64) }}
     <h3>Copy Kubernetes CA Certificate From PEM</h3>
 
     <p>Put the CA Certificate into your .kube directory</p>
@@ -68,7 +68,9 @@ EOF</code></pre>
       <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt="">
     </button>
   <pre><code>kubectl config set-cluster {{ .ClusterName }} \
-  {{- if or .K8sCaPem .K8sCaURI }}
+  {{- if .K8sCaPemBase64 }}
+    --certificate-authority-data={{ .K8sCaPemBase64 }} \
+  {{- else if or .K8sCaPem .K8sCaURI }}
     --certificate-authority=${HOME}/.kube/certs/{{ .ClusterName}}/k8s-ca.crt \
   {{- end }}
     --server={{ .K8sMasterURI }}</code></pre>

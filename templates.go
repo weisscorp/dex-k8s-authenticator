@@ -37,6 +37,7 @@ type templateData struct {
 	K8sMasterURI      string
 	K8sCaURI          string
 	K8sCaPem          string
+	K8sCaPemBase64    string
 	IDPCaURI          string
 	IDPCaPem          string
 	LogoURI           string
@@ -82,6 +83,7 @@ func (cluster *Cluster) renderToken(w http.ResponseWriter,
 		K8sMasterURI:      cluster.K8s_Master_URI,
 		K8sCaURI:          cluster.K8s_Ca_URI,
 		K8sCaPem:          cluster.K8s_Ca_Pem,
+		K8sCaPemBase64:    cluster.K8s_Ca_Pem_Base64_Encoded,
 		IDPCaURI:          idpCaURI,
 		IDPCaPem:          idpCaPem,
 		LogoURI:           logoURI,
