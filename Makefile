@@ -1,6 +1,7 @@
 GOBIN=$(shell pwd)/bin
 GOFILES=$(wildcard *.go)
 GONAME=dex-k8s-authenticator
+REGISTRY=weisscorp
 TAG=latest
 
 all: build 
@@ -12,8 +13,13 @@ build:
 
 .PHONY: container
 container:
-	@echo "Building container image"
-	docker build -t ${GONAME}:${TAG} .
+	@echo "Building container image for linux/amd64"
+	docker buildx build --platform linux/amd64 -t ${GONAME}:${TAG} -t ${REGISTRY}/${GONAME}:${TAG} --load .
+
+.PHONY: container-no-cache
+container-no-cache:
+	@echo "Building container image for linux/amd64 (no cache)"
+	docker buildx build --platform linux/amd64 --no-cache -t ${GONAME}:${TAG} -t ${REGISTRY}/${GONAME}:${TAG} --load .
 .PHONY: clean
 clean:
 	@echo "Cleaning"
