@@ -86,6 +86,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 Based on the original [dex-k8s-authenticator](https://github.com/mintel/dex-k8s-authenticator) by Mintel Group Ltd.
 
+This fork is maintained at [github.com/weisscorp/dex-k8s-authenticator](https://github.com/weisscorp/dex-k8s-authenticator).
+
 ## Alternatives
 
 - https://github.com/heptiolabs/gangway

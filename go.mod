@@ -1,4 +1,4 @@
-module github.com/mintel/dex-k8s-authenticator
+module github.com/weisscorp/dex-k8s-authenticator
 
 go 1.23.0
 

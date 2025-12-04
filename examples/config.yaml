@@ -32,17 +32,25 @@ clusters:
 
     # CA for your k8s cluster - used in WebUI instructions for generating
     # kubeconfig
-    # Both k8s_ca_uri and k8s_ca_pem are optional - you typically specifiy
-    # one or the other if required
+    # You can specify k8s_ca_uri, k8s_ca_pem, k8s_ca_pem_file, or k8s_ca_pem_base64_encoded
+    # Typically you specify one of these options if required
     #
     # Provides a link to the CA from a hosted site
     # k8s_ca_uri: http://url-to-your-ca.crt
     #
-    # Provides abililty to specify CA inline
+    # Provides ability to specify CA inline (multiline format)
     # k8s_ca_pem: |
     #   -----BEGIN CERTIFICATE-----
     #   ...
     #   -----END CERTIFICATE-----
+    #
+    # Provides ability to specify CA from a file
+    # k8s_ca_pem_file: /path/to/ca.crt
+    #
+    # Provides ability to specify CA as base64-encoded string (useful for single-line
+    # configuration or when embedding in environment variables or CI/CD pipelines)
+    # The certificate will be automatically decoded before use
+    # k8s_ca_pem_base64_encoded: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t..."
 
 # Specify multiple extra root CA files to be loaded
 # trusted_root_ca:
