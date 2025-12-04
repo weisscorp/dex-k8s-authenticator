@@ -27,10 +27,15 @@ All notable changes to this project will be documented in this file.
   - Reduced font size for commands and tokens (12px) for better screen fit
   - Moved copy buttons inside command blocks instead of beside them
   - Added spacing and visual separation between command blocks
-- Added the ability to pass the cluster certificate directly in the kubeconfig. Lens on macOS runs in its own environment and doesn’t have access to the certificate file.
 
 ### Fixed
 
 - Fixed text readability issues in dark theme
 - Fixed copy button positioning and visibility
 - Fixed color inconsistencies between light and dark themes
+
+## [v2.0.0]
+
+### Changed
+
+- Added the ability to pass the cluster certificate directly in the kubeconfig. Lens on macOS runs in its own environment and doesn’t have access to the certificate file.
