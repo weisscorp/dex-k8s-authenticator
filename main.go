@@ -28,6 +28,7 @@ import (
 var (
 	config_file string
 	debug       bool
+	dev_mode    bool
 )
 
 type debugTransport struct {
@@ -112,7 +113,7 @@ func substituteEnvVars(text string) string {
 // Do some config parsing
 // Setup http-clients and oidc providers
 // Define per-cluster handlers
-func start_app(config Config) {
+func start_app(config Config, devMode bool) {
 
 	// Config validation
 	listenURL, err := url.Parse(config.Listen)
@@ -187,57 +188,66 @@ func start_app(config Config) {
 	// Generate handlers for each cluster
 	for i := range config.Clusters {
 		cluster := config.Clusters[i]
-		if debug {
-			if cluster.Client == nil {
-				cluster.Client = &http.Client{
-					Transport: debugTransport{tr},
-				}
-			} else {
-				cluster.Client.Transport = debugTransport{tr}
+		
+		if devMode {
+			log.Printf("DEV MODE: Skipping Dex connection for cluster %s", cluster.Name)
+			cluster.OfflineAsScope = true
+			if len(cluster.Scopes) == 0 {
+				cluster.Scopes = []string{"openid", "profile", "email", "offline_access", "groups"}
 			}
 		} else {
-			cluster.Client = &http.Client{Transport: tr}
-		}
-
-		ctx := oidc.ClientContext(context.Background(), cluster.Client)
-		log.Printf("Creating new provider %s", cluster.Issuer)
-		provider, err := oidc.NewProvider(ctx, cluster.Issuer)
-
-		if err != nil {
-			log.Fatalf("Failed to query provider %q: %v\n", cluster.Issuer, err)
-		}
-
-		cluster.Provider = provider
-
-		log.Printf("Verifying client %s", cluster.Client_ID)
-
-		verifier := provider.Verifier(&oidc.Config{ClientID: cluster.Client_ID})
-
-		cluster.Verifier = verifier
-
-		if err := provider.Claims(&s); err != nil {
-			log.Fatalf("Failed to parse provider scopes_supported: %v", err)
-		}
-
-		if len(s.ScopesSupported) == 0 {
-			// scopes_supported is a "RECOMMENDED" discovery claim, not a required
-			// one. If missing, assume that the provider follows the spec and has
-			// an "offline_access" scope.
-			cluster.OfflineAsScope = true
-		} else {
-			// See if scopes_supported has the "offline_access" scope.
-			cluster.OfflineAsScope = func() bool {
-				for _, scope := range s.ScopesSupported {
-					if scope == oidc.ScopeOfflineAccess {
-						return true
+			if debug {
+				if cluster.Client == nil {
+					cluster.Client = &http.Client{
+						Transport: debugTransport{tr},
 					}
+				} else {
+					cluster.Client.Transport = debugTransport{tr}
 				}
-				return false
-			}()
-		}
+			} else {
+				cluster.Client = &http.Client{Transport: tr}
+			}
 
-		if len(cluster.Scopes) == 0 {
-			cluster.Scopes = []string{"openid", "profile", "email", "offline_access", "groups"}
+			ctx := oidc.ClientContext(context.Background(), cluster.Client)
+			log.Printf("Creating new provider %s", cluster.Issuer)
+			provider, err := oidc.NewProvider(ctx, cluster.Issuer)
+
+			if err != nil {
+				log.Fatalf("Failed to query provider %q: %v\n", cluster.Issuer, err)
+			}
+
+			cluster.Provider = provider
+
+			log.Printf("Verifying client %s", cluster.Client_ID)
+
+			verifier := provider.Verifier(&oidc.Config{ClientID: cluster.Client_ID})
+
+			cluster.Verifier = verifier
+
+			if err := provider.Claims(&s); err != nil {
+				log.Fatalf("Failed to parse provider scopes_supported: %v", err)
+			}
+
+			if len(s.ScopesSupported) == 0 {
+				// scopes_supported is a "RECOMMENDED" discovery claim, not a required
+				// one. If missing, assume that the provider follows the spec and has
+				// an "offline_access" scope.
+				cluster.OfflineAsScope = true
+			} else {
+				// See if scopes_supported has the "offline_access" scope.
+				cluster.OfflineAsScope = func() bool {
+					for _, scope := range s.ScopesSupported {
+						if scope == oidc.ScopeOfflineAccess {
+							return true
+						}
+					}
+					return false
+				}()
+			}
+
+			if len(cluster.Scopes) == 0 {
+				cluster.Scopes = []string{"openid", "profile", "email", "offline_access", "groups"}
+			}
 		}
 
 		if cluster.K8s_Ca_Pem_File != "" {
@@ -364,7 +374,7 @@ var RootCmd = &cobra.Command{
 		substituteEnvVarsRecursive(copy, original)
 
 		// Start the app
-		start_app(copy.Interface().(Config))
+		start_app(copy.Interface().(Config), dev_mode)
 
 		// Fallback if no args specified
 		cmd.HelpFunc()(cmd, args)
@@ -418,6 +428,7 @@ func init() {
 
 	RootCmd.Flags().StringVar(&config_file, "config", "", "./config.yml")
 	RootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Enable debug logging")
+	RootCmd.PersistentFlags().BoolVar(&dev_mode, "dev-mode", false, "Enable development mode (skip Dex connection, use mock tokens)")
 }
 
 // Let's go!

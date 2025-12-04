@@ -67,8 +67,7 @@ EOF</code></pre>
     <button class="btn" style="float:right" data-clipboard-snippet="">
       <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt="">
     </button>
-  <pre><code>{{- if .K8sCaPemBase64 }}
-kubectl config set-cluster {{ .ClusterName }} --server={{ .K8sMasterURI }}
+  <pre><code>{{- if .K8sCaPemBase64 }}kubectl config set-cluster {{ .ClusterName }} --server={{ .K8sMasterURI }}
 kubectl config set clusters.{{ .ClusterName }}.certificate-authority-data '{{ .K8sCaPemBase64 }}'
 {{- else }}
 kubectl config set-cluster {{ .ClusterName }} \

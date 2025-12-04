@@ -1,0 +1,23 @@
+{{ define "linux-mac-tab-content" }}
+  <h3>Install and Set Up kubectl</h3>
+  <div>
+  See 
+  <a title="Install and setup kubectl" href="https://kubernetes.io/docs/tasks/tools/install-kubectl/">
+    https://kubernetes.io/docs/tasks/tools/install-kubectl
+  </a>
+  {{ if .KubectlVersion }}
+  <p>
+  Download kubectl:
+  <ul>
+    <li>Linux: <a title="Download kubectl for Linux" href="https://storage.googleapis.com/kubernetes-release/release/{{.KubectlVersion}}/bin/linux/amd64/kubectl">
+      https://storage.googleapis.com/kubernetes-release/release/{{.KubectlVersion}}/bin/linux/amd64/kubectl
+    </a></li>
+    <li>macOS: <a title="Download kubectl for macOS" href="https://storage.googleapis.com/kubernetes-release/release/{{.KubectlVersion}}/bin/darwin/amd64/kubectl">
+      https://storage.googleapis.com/kubernetes-release/release/{{.KubectlVersion}}/bin/darwin/amd64/kubectl
+    </a></li>
+  </ul>
+  </p>
+  {{ end }}
+  </div>
+  {{ template "linux-mac-common" . }}
+{{ end }}
