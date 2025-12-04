@@ -60,7 +60,6 @@ func (d debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 type Cluster struct {
 	Name                      string
 	Namespace                 string
-	Short_Description         string
 	Description               string
 	Issuer                    string
 	Client_Secret             string

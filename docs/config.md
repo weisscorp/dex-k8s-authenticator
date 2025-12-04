@@ -8,8 +8,7 @@ An example configuration is available [here](../examples/config.yaml)
 | Name                      | Required | Context | Description                                                                           |
 |---------------------------|----------|---------|---------------------------------------------------------------------------------------|
 | name                      | yes      | cluster | Internal id of cluster                                                                |
-| short_description         | yes      | cluster | Short description of cluster                                                          |
-| description               | yes      | cluster | Extended description of cluster                                                       |
+| description               | yes      | cluster | Description of cluster                                                                |
 | client_secret             | yes      | cluster | OAuth2 client-secret (shared between dex-k8s-auth and dex)                            |
 | client_id                 | yes      | cluster | OAuth2 client-id public identifier (shared between dex-k8s-auth and dex)              |
 | connector_id              | no       | cluster | Dex connector ID to use by default omitting other available connectors                |
@@ -40,7 +39,6 @@ Environment variables can be included in the configuration. This enables you to 
 ```
 clusters:
   - name: example-cluster
-    short_description: "Example Cluster"
     description: "Example Cluster Long Description..."
     client_secret: ${CLIENT_SECRET_EXAMPLE_CLUSTER}
 ```
@@ -58,7 +56,6 @@ In addition to this, you need to update the `redirect_uri` value.
 ```yaml
 clusters:
   - name: example-cluster
-    short_description: "Example Cluster"
     description: "Example Cluster Long Description..."
     redirect_uri: http://127.0.0.1:5555/dex-auth/callback/example-cluster
     client_secret: ...

@@ -11,7 +11,6 @@ import (
 func TestRenderToken(t *testing.T) {
 	cluster := Cluster{
 		Name:              "test-cluster",
-		Short_Description: "Test Cluster",
 		Client_ID:         "test-client",
 		Client_Secret:     "test-secret",
 		K8s_Master_URI:    "https://k8s.example.com:6443",

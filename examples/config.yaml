@@ -5,8 +5,7 @@ clusters:
     # Default namespace (optional)
     namespace: my-namespace
 
-    # Descriptions used in the WebUI
-    short_description: "Example Cluster"
+    # Description used in the WebUI
     description: "Example Cluster Long Description..."
 
     # Redirect Url pointing to dex-k8s-authenticator callback for this cluster

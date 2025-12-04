@@ -31,7 +31,6 @@ type templateData struct {
 	Username          string
 	Issuer            string
 	ClusterName       string
-	ShortDescription  string
 	ClientSecret      string
 	ClientID          string
 	K8sMasterURI      string
@@ -77,7 +76,6 @@ func (cluster *Cluster) renderToken(w http.ResponseWriter,
 		Username:          unix_username,
 		Issuer:            data["iss"].(string),
 		ClusterName:       cluster.Name,
-		ShortDescription:  cluster.Short_Description,
 		ClientSecret:      cluster.Client_Secret,
 		ClientID:          cluster.Client_ID,
 		K8sMasterURI:      cluster.K8s_Master_URI,
