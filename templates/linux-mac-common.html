@@ -62,6 +62,14 @@ EOF</code></pre>
 
   <p>These commands will update <tt>~/.kube/config</tt></p>
 
+  <div style="margin-bottom: 16px;">
+    <button class="btn-copy-all" id="copy-all-commands" data-web-path="{{ .Web_Path_Prefix }}">
+      <img class="clippy" width="16" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt=""/>
+      Copy All
+    </button>
+  </div>
+
+  <div id="commands-container">
   <h4>1. Set cluster configuration</h4>
   {{- if .K8sCaPemBase64 }}
   <p>Configure the cluster endpoint and server URL:</p>
@@ -129,5 +137,62 @@ EOF</code></pre>
     </button>
     <pre><code class="hljs">kubectl config use-context {{ if not .StaticContextName }}{{ .Username }}-{{ end }}{{ .ClusterName}}</code></pre>
   </div>
+  </div>
+
+  <script>
+    (function() {
+      var copyAllBtn = document.getElementById('copy-all-commands');
+      if (copyAllBtn) {
+        var webPath = copyAllBtn.getAttribute('data-web-path') || '';
+        var originalHTML = copyAllBtn.innerHTML;
+        
+        copyAllBtn.addEventListener('click', function() {
+          var container = document.getElementById('commands-container');
+          if (!container) return;
+          
+          var commands = [];
+          var codeBlocks = container.querySelectorAll('pre code');
+          
+          codeBlocks.forEach(function(code) {
+            var text = code.textContent || code.innerText;
+            if (text.trim()) {
+              commands.push(text.trim());
+            }
+          });
+          
+          var allCommands = commands.join('\n\n');
+          
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(allCommands).then(function() {
+              copyAllBtn.innerHTML = '<img class="clippy" width="16" src="' + webPath + 'static/clippy.svg" alt=""/> Copied!';
+              setTimeout(function() {
+                copyAllBtn.innerHTML = originalHTML;
+              }, 2000);
+            }).catch(function(err) {
+              console.error('Failed to copy:', err);
+            });
+          } else {
+            // Fallback for older browsers
+            var textarea = document.createElement('textarea');
+            textarea.value = allCommands;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+              document.execCommand('copy');
+              copyAllBtn.innerHTML = '<img class="clippy" width="16" src="' + webPath + 'static/clippy.svg" alt=""/> Copied!';
+              setTimeout(function() {
+                copyAllBtn.innerHTML = originalHTML;
+              }, 2000);
+            } catch (err) {
+              console.error('Failed to copy:', err);
+            }
+            document.body.removeChild(textarea);
+          }
+        });
+      }
+    })();
+  </script>
 
 {{ end }}
