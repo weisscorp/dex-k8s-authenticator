@@ -22,11 +22,12 @@
     <p>Copy this CA Certificate and download it to your .kube directory</p>
     <div class="command">
 
-      <button class="btn" style="float:right" data-clipboard-snippet="">
+      <button class="btn" data-clipboard-snippet="">
         <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt=""/>
       </button>
 
-      <pre><code>curl --create-dirs -s {{ .IDPCaURI }} -o ${HOME}/.kube/certs/{{ .ClusterName }}/idp-ca.crt</code></pre>
+      <pre><code>New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.kube\certs\{{ .ClusterName }}" | Out-Null
+Invoke-WebRequest -Uri {{ .IDPCaURI }} -OutFile "$env:USERPROFILE\.kube\certs\{{ .ClusterName }}\idp-ca.crt"</code></pre>
     </div>
   {{ end }}
 
@@ -36,13 +37,14 @@
     <p>Put the CA Certificate into your .kube directory</p>
     <div class="command">
 
-      <button class="btn" style="float:right" data-clipboard-snippet="">
+      <button class="btn" data-clipboard-snippet="">
         <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt=""/>
       </button>
 
-      <pre><code>mkdir -p ${HOME}/.kube/certs/{{ .ClusterName }}/ &amp;&amp; cat &lt;&lt; EOF &gt; ${HOME}/.kube/certs/{{ .ClusterName }}/idp-ca.crt
-{{ .IDPCaPem}}
-EOF</code></pre>
+      <pre><code>New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.kube\certs\{{ .ClusterName }}" | Out-Null
+@"
+{{ .IDPCaPem }}
+"@ | Out-File -FilePath "$env:USERPROFILE\.kube\certs\{{ .ClusterName }}\idp-ca.crt" -Encoding ASCII</code></pre>
     </div>
   {{ end }}
 
@@ -53,10 +55,11 @@ EOF</code></pre>
     <p>Copy this CA Certificate and download it to your .kube directory</p>
     <div class="command">
 
-      <button class="btn" style="float: right" data-clipboard-snippet="">
+      <button class="btn" data-clipboard-snippet="">
         <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt=""/>
       </button>
-      <pre><code>curl --create-dirs -s {{ .K8sCaURI }} -o ${HOME}/.kube/certs/{{ .ClusterName }}/k8s-ca.crt</code></pre>
+      <pre><code>New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.kube\certs\{{ .ClusterName }}" | Out-Null
+Invoke-WebRequest -Uri {{ .K8sCaURI }} -OutFile "$env:USERPROFILE\.kube\certs\{{ .ClusterName }}\k8s-ca.crt"</code></pre>
     </div>
   {{ end }}
 
@@ -67,52 +70,66 @@ EOF</code></pre>
 
     <div class="command">
 
-      <button class="btn" style="float:right" data-clipboard-snippet="">
+      <button class="btn" data-clipboard-snippet="">
         <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt=""/>
       </button>
-      <pre><code>mkdir -p ${HOME}/.kube/certs/{{ .ClusterName }}/ &amp;&amp; cat &lt;&lt; EOF &gt; ${HOME}/.kube/certs/{{ .ClusterName }}/k8s-ca.crt
+      <pre><code>New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.kube\certs\{{ .ClusterName }}" | Out-Null
+@"
 {{ .K8sCaPem }}
-EOF</code></pre>
+"@ | Out-File -FilePath "$env:USERPROFILE\.kube\certs\{{ .ClusterName }}\k8s-ca.crt" -Encoding ASCII</code></pre>
     </div>
   {{ end }}
 
   <h3>Run configuration commands</h3>
 
-  <p>These commands will update <tt>~/.kube/config</tt></p>
+  <p>These commands will update <tt>$env:USERPROFILE\.kube\config</tt></p>
 
+  <h4>1. Set cluster configuration</h4>
+  {{- if .K8sCaPemBase64 }}
+  <p>Configure the cluster endpoint and server URL:</p>
   <div class="command">
-
-    <button class="btn" style="float:right" data-clipboard-snippet="">
+    <button class="btn" data-clipboard-snippet="">
       <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt="">
     </button>
-  <pre><code>{{- if .K8sCaPemBase64 }}kubectl config set-cluster {{ .ClusterName }} --server={{ .K8sMasterURI }}
-kubectl config set clusters.{{ .ClusterName }}.certificate-authority-data '{{ .K8sCaPemBase64 }}'
-{{- else }}
-kubectl config set-cluster {{ .ClusterName }}
-    {{- if or .K8sCaPem .K8sCaURI }} --certificate-authority=${HOME}/.kube/certs/{{ .ClusterName}}/k8s-ca.crt
-    {{- end }} --server={{ .K8sMasterURI }}
-{{- end }}</code></pre>
+    <pre><code>kubectl config set-cluster {{ .ClusterName }} --server={{ .K8sMasterURI }}</code></pre>
   </div>
-
+  <p>Set the cluster certificate authority data:</p>
   <div class="command">
+    <button class="btn" data-clipboard-snippet="">
+      <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt="">
+    </button>
+    <pre><code>kubectl config set clusters.{{ .ClusterName }}.certificate-authority-data '{{ .K8sCaPemBase64 }}'</code></pre>
+  </div>
+  {{- else }}
+  <p>Configure the cluster endpoint, certificate authority, and server URL:</p>
+  <div class="command">
+    <button class="btn" data-clipboard-snippet="">
+      <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt="">
+    </button>
+    <pre><code>kubectl config set-cluster {{ .ClusterName }}{{ if or .K8sCaPem .K8sCaURI }} --certificate-authority="$env:USERPROFILE\.kube\certs\{{ .ClusterName }}\k8s-ca.crt"{{ end }} --server={{ .K8sMasterURI }}</code></pre>
+  </div>
+  {{- end }}
 
-    <button class="btn" style="float:right" data-clipboard-snippet="">
+  <h4>2. Set credentials</h4>
+  <p>Configure OIDC authentication credentials with IDP issuer, client details, and tokens:</p>
+  <div class="command">
+    <button class="btn" data-clipboard-snippet="">
       <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt=""/>
     </button>
-  <pre><code>kubectl config set-credentials {{ .Username }}-{{ .ClusterName }} --auth-provider=oidc --auth-provider-arg=idp-issuer-url={{ .Issuer }} --auth-provider-arg=client-id={{ .ClientID }} --auth-provider-arg=client-secret={{ .ClientSecret }} --auth-provider-arg=refresh-token={{ .RefreshToken }} --auth-provider-arg=id-token={{ .IDToken }}
-  {{- if or (.IDPCaURI) (.IDPCaPem) }} --auth-provider-arg=idp-certificate-authority=${HOME}/.kube/certs/{{ .ClusterName }}/idp-ca.crt
-  {{- end }}</code></pre>
+    <pre><code>kubectl config set-credentials {{ .Username }}-{{ .ClusterName }} --auth-provider=oidc --auth-provider-arg="idp-issuer-url={{ .Issuer }}" --auth-provider-arg="client-id={{ .ClientID }}" --auth-provider-arg="client-secret={{ .ClientSecret }}" --auth-provider-arg="refresh-token={{ .RefreshToken }}" --auth-provider-arg="id-token={{ .IDToken }}"{{ if or (.IDPCaURI) (.IDPCaPem) }} --auth-provider-arg="idp-certificate-authority=$env:USERPROFILE\.kube\certs\{{ .ClusterName }}\idp-ca.crt"{{ end }}</code></pre>
   </div>
+  <h4>3. Set context</h4>
+  <p>Create a context that associates the cluster with your credentials:</p>
   <div class="command">
-
-    <button class="btn" style="float:right" data-clipboard-snippet="">
+    <button class="btn" data-clipboard-snippet="">
       <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt="">
     </button>
-    <pre><code class="hljs">kubectl config set-context {{ if not .StaticContextName }}{{ .Username }}-{{ end }}{{ .ClusterName }} --cluster={{ .ClusterName }} --user={{ .Username}}-{{.ClusterName }}</code></pre>
+    <pre><code class="hljs">kubectl config set-context {{ if not .StaticContextName }}{{ .Username }}-{{ end }}{{ .ClusterName }} --cluster={{ .ClusterName }}{{ if .Namespace }} --namespace={{ .Namespace }}{{ end }} --user={{ .Username}}-{{.ClusterName }}</code></pre>
   </div>
-
+  <h4>4. Use context</h4>
+  <p>Switch to the newly created context:</p>
   <div class="command">
-    <button class="btn" style="float:right" data-clipboard-snippet="">
+    <button class="btn" data-clipboard-snippet="">
       <img class="clippy" width="13" src="{{ .Web_Path_Prefix }}static/clippy.svg" alt=""/>
     </button>
     <pre><code class="hljs">kubectl config use-context {{ if not .StaticContextName }}{{ .Username }}-{{ end }}{{ .ClusterName}}</code></pre>

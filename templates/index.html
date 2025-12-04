@@ -10,18 +10,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{ .Web_Path_Prefix }}static/main.css" rel="stylesheet" type="text/css">
     <link href="{{ .Web_Path_Prefix }}static/styles.css" rel="stylesheet" type="text/css">
+    <link href="{{ .Web_Path_Prefix }}static/theme.css" rel="stylesheet" type="text/css">
     <link rel="icon" href="{{ .Web_Path_Prefix }}static/favicon.png">
   </head>
 
   <body class="theme-body">
-    <div class="theme-navbar">
-      {{ if .Logo_Uri }}
-      <div class="theme-navbar__logo-wrap">
-          <img class="theme-navbar__logo" src="{{ .Logo_Uri }}"/>
-      </div>
-      {{ end }}
-    </div>
-
     <div class="dex-container">
 
       <div class="theme-panel">
@@ -47,5 +40,6 @@
         </div>
       </div>
     </div>
+    <script src="{{ .Web_Path_Prefix }}static/theme.js"></script>
   </body>
 </html>
