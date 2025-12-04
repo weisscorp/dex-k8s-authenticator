@@ -2,15 +2,15 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"time"
 
-	"github.com/coreos/go-oidc"
 	"github.com/spf13/cast"
 	"golang.org/x/oauth2"
 )
@@ -116,7 +116,7 @@ func (cluster *Cluster) handleCallback(w http.ResponseWriter, r *http.Request) {
 		if cluster.Config.IDP_Ca_Pem != "" {
 			IdpCaPem = cluster.Config.IDP_Ca_Pem
 		} else if cluster.Config.IDP_Ca_Pem_File != "" {
-			content, err := ioutil.ReadFile(cluster.Config.IDP_Ca_Pem_File)
+			content, err := os.ReadFile(cluster.Config.IDP_Ca_Pem_File)
 			if err != nil {
 				log.Fatalf("Failed to load CA from file %s, %s", cluster.Config.IDP_Ca_Pem_File, err)
 			}
@@ -140,7 +140,7 @@ func (cluster *Cluster) handleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := oidc.ClientContext(r.Context(), cluster.Client)
+	ctx := context.WithValue(r.Context(), oauth2.HTTPClient, cluster.Client)
 	oauth2Config := cluster.oauth2Config()
 	switch r.Method {
 	case "GET":
@@ -218,7 +218,7 @@ func (cluster *Cluster) handleCallback(w http.ResponseWriter, r *http.Request) {
 	if cluster.Config.IDP_Ca_Pem != "" {
 		IdpCaPem = cluster.Config.IDP_Ca_Pem
 	} else if cluster.Config.IDP_Ca_Pem_File != "" {
-		content, err := ioutil.ReadFile(cluster.Config.IDP_Ca_Pem_File)
+		content, err := os.ReadFile(cluster.Config.IDP_Ca_Pem_File)
 		if err != nil {
 			log.Fatalf("Failed to load CA from file %s, %s", cluster.Config.IDP_Ca_Pem_File, err)
 		}

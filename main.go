@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -19,10 +18,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/coreos/go-oidc"
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -140,7 +140,7 @@ func start_app(config Config, devMode bool) {
 	}
 	// Load CA certs from file
 	if config.Trusted_Root_Ca_File != "" {
-		content, err := ioutil.ReadFile(config.Trusted_Root_Ca_File)
+		content, err := os.ReadFile(config.Trusted_Root_Ca_File)
 		if err != nil {
 			log.Fatalf("Failed to read file Trusted Root CA %s, %v", config.Trusted_Root_Ca_File, err)
 		}
@@ -208,7 +208,7 @@ func start_app(config Config, devMode bool) {
 				cluster.Client = &http.Client{Transport: tr}
 			}
 
-			ctx := oidc.ClientContext(context.Background(), cluster.Client)
+			ctx := context.WithValue(context.Background(), oauth2.HTTPClient, cluster.Client)
 			log.Printf("Creating new provider %s", cluster.Issuer)
 			provider, err := oidc.NewProvider(ctx, cluster.Issuer)
 
@@ -251,7 +251,7 @@ func start_app(config Config, devMode bool) {
 		}
 
 		if cluster.K8s_Ca_Pem_File != "" {
-			content, err := ioutil.ReadFile(cluster.K8s_Ca_Pem_File)
+			content, err := os.ReadFile(cluster.K8s_Ca_Pem_File)
 			if err != nil {
 				log.Fatalf("Failed to load CA from file %s, %s", cluster.K8s_Ca_Pem_File, err)
 			}
@@ -403,11 +403,21 @@ func initConfig() {
 		viper.AddConfigPath(path)
 		viper.SetDefault("web_path_prefix", "/")
 
-		config, err := ioutil.ReadFile(config_file)
+		config, err := os.ReadFile(config_file)
 		if err != nil {
 			log.Fatalf("Error reading config file, %s", err)
 		}
 
+		// Determine config type from file extension
+		ext := strings.ToLower(filepath.Ext(config_file))
+		configType := "yaml"
+		if ext == ".json" {
+			configType = "json"
+		} else if ext == ".toml" {
+			configType = "toml"
+		}
+
+		viper.SetConfigType(configType)
 		origConfigStr := bytes.NewBuffer(config).String()
 
 		if err := viper.ReadConfig(bytes.NewBufferString(origConfigStr)); err != nil {
