@@ -32,7 +32,6 @@ dexK8sAuthenticator:
   #tlsKey: /path/to/dex-client.key
   clusters:
   - name: my-cluster
-    short_description: "My Cluster"
     description: "Example Cluster Long Description..."
     client_secret: pUBnBOY80SnXgjibTYM9ZWNzY2xreNGQok
     issuer: https://dex.example.com

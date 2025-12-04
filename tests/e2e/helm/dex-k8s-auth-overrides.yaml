@@ -12,7 +12,6 @@ dexK8sAuthenticator:
   port: 5555
   clusters:
   - name: my-cluster
-    short_description: "My Cluster"
     description: "Example Cluster Long Description..."
     client_secret: pUBnBOY80SnXgjibTYM9ZWNzY2xreNGQok
     issuer: http://${NODE_IP}:30001

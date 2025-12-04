@@ -33,3 +33,22 @@ lint:
 .PHONY: lint-fix
 lint-fix: lint
 	golangci-lint run --fix
+
+.PHONY: test
+test:
+	@echo "Running tests..."
+	go test -v ./...
+
+.PHONY: test-coverage
+test-coverage:
+	@echo "Running tests with coverage..."
+	go test -v -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated: coverage.html"
+
+.PHONY: local-run
+local-run: build
+	@echo "Stopping any running instances..."
+	@pkill -9 -f dex-k8s-authenticator || true
+	@echo "Starting dex-k8s-authenticator in dev mode..."
+	./bin/dex-k8s-authenticator --config config.yml --dev-mode

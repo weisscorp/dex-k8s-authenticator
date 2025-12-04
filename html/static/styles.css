@@ -1,18 +1,21 @@
 .theme-body {
-  background-color: #efefef;
-  color: #333;
+  background-color: var(--bg-primary, #f0f0f3);
+  color: var(--text-primary, #2d2d2d);
   font-family: 'Source Sans Pro', Helvetica, sans-serif;
+  transition: var(--transition, all 0.3s ease);
 }
 
 .theme-navbar {
-  background-color: #fff;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-  color: #333;
+  background-color: var(--bg-secondary, #ffffff);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+  color: var(--text-primary, #2d2d2d);
   font-size: 13px;
   font-weight: 100;
   height: 46px;
   overflow: hidden;
   padding: 0 10px;
+  border-radius: 0 0 20px 20px;
+  transition: var(--transition, all 0.3s ease);
 }
 
 .theme-navbar__logo-wrap {
@@ -36,9 +39,12 @@
 }
 
 .theme-panel {
-  background-color: #fff;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-  padding: 30px;
+  background-color: var(--bg-secondary, #ffffff);
+  box-shadow: var(--shadow-soft, 8px 8px 16px #d1d1d4, -8px -8px 16px #ffffff);
+  padding: 40px;
+  border-radius: var(--border-radius, 20px);
+  transition: var(--transition, all 0.3s ease);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .theme-btn-provider {
@@ -99,6 +105,6 @@
   font-weight: 300;
   margin: 4px auto;
   position: relative;
-  text-align: left;
+  text-align: center;
   width: 350px;
 }

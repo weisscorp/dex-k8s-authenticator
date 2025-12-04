@@ -2,15 +2,15 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"time"
 
-	"github.com/coreos/go-oidc"
 	"github.com/spf13/cast"
 	"golang.org/x/oauth2"
 )
@@ -18,11 +18,21 @@ import (
 const exampleAppState = "Vgn2lp5QnymFtLntKX5dM8k773PwcM87T4hQtiESC1q8wkUBgw5D3kH0r5qJ"
 
 func (cluster *Cluster) oauth2Config() *oauth2.Config {
+	// In dev mode, use mock endpoint
+	var endpoint oauth2.Endpoint
+	if cluster.Provider == nil {
+		endpoint = oauth2.Endpoint{
+			AuthURL:  cluster.Issuer + "/auth",
+			TokenURL: cluster.Issuer + "/token",
+		}
+	} else {
+		endpoint = cluster.Provider.Endpoint()
+	}
 
 	return &oauth2.Config{
 		ClientID:     cluster.Client_ID,
 		ClientSecret: cluster.Client_Secret,
-		Endpoint:     cluster.Provider.Endpoint(),
+		Endpoint:     endpoint,
 		Scopes:       cluster.Scopes,
 		RedirectURL:  cluster.Redirect_URI,
 	}
@@ -39,6 +49,15 @@ func (config *Config) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 func (cluster *Cluster) handleLogin(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Handling login-uri for: %s", cluster.Name)
+	
+	// In dev mode, redirect directly to callback with mock code
+	if cluster.Provider == nil {
+		log.Printf("DEV MODE: Redirecting to callback with mock token")
+		callbackURL := fmt.Sprintf("%s?code=mock-dev-code&state=%s", cluster.Redirect_URI, exampleAppState)
+		http.Redirect(w, r, callbackURL, http.StatusSeeOther)
+		return
+	}
+	
 	authCodeURL := cluster.oauth2Config().AuthCodeURL(exampleAppState, oauth2.AccessTypeOffline)
 	if cluster.Connector_ID != "" {
 		log.Printf("Using dex connector with id %#q", cluster.Connector_ID)
@@ -60,7 +79,68 @@ func (cluster *Cluster) handleCallback(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Handling callback for: %s", cluster.Name)
 
-	ctx := oidc.ClientContext(r.Context(), cluster.Client)
+	// Dev mode: use mock tokens
+	if cluster.Provider == nil {
+		log.Printf("DEV MODE: Using mock tokens")
+		code := r.FormValue("code")
+		if code == "" || code != "mock-dev-code" {
+			cluster.renderHTMLError(w, userErrorMsg, http.StatusBadRequest)
+			return
+		}
+		
+		// Create mock token with mock ID token
+		mockIDToken := `eyJhbGciOiJSUzI1NiIsImtpZCI6Im1vY2sta2V5In0.eyJpc3MiOiJodHRwczovL2RleC5leGFtcGxlLmNvbSIsImF1ZCI6Imt4cy1jbHVzdGVyIiwiZXhwIjo5OTk5OTk5OTk5LCJpYXQiOjE3MDAwMDAwMDAsInN1YiI6Im1vY2stdXNlciIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoiTW9jayBVc2VyIn0.mock-signature`
+		
+		token = &oauth2.Token{
+			AccessToken:  "mock-access-token",
+			TokenType:    "Bearer",
+			RefreshToken: "mock-refresh-token",
+			Expiry:       time.Now().Add(time.Hour * 24),
+		}
+		token = token.WithExtra(map[string]interface{}{
+			"id_token": mockIDToken,
+		})
+		
+		// Create mock claims
+		claims := json.RawMessage(`{
+			"iss": "` + cluster.Issuer + `",
+			"aud": "` + cluster.Client_ID + `",
+			"exp": 9999999999,
+			"iat": 1700000000,
+			"sub": "mock-user",
+			"email": "test@example.com",
+			"email_verified": true,
+			"name": "Mock User"
+		}`)
+		
+		if cluster.Config.IDP_Ca_Pem != "" {
+			IdpCaPem = cluster.Config.IDP_Ca_Pem
+		} else if cluster.Config.IDP_Ca_Pem_File != "" {
+			content, err := os.ReadFile(cluster.Config.IDP_Ca_Pem_File)
+			if err != nil {
+				log.Fatalf("Failed to load CA from file %s, %s", cluster.Config.IDP_Ca_Pem_File, err)
+			}
+			IdpCaPem = cast.ToString(content)
+		}
+
+		buff := new(bytes.Buffer)
+		if err = json.Indent(buff, []byte(claims), "", "  "); err != nil {
+			cluster.renderHTMLError(w, userErrorMsg, http.StatusBadRequest)
+			log.Printf("handleCallback: failed to indent json:  %v", err)
+			return
+		}
+
+		cluster.renderToken(w, mockIDToken, token.RefreshToken,
+			cluster.Config.IDP_Ca_URI,
+			IdpCaPem,
+			cluster.Config.Logo_Uri,
+			cluster.Config.Web_Path_Prefix,
+			cluster.Config.Kubectl_Version,
+			buff.Bytes())
+		return
+	}
+
+	ctx := context.WithValue(r.Context(), oauth2.HTTPClient, cluster.Client)
 	oauth2Config := cluster.oauth2Config()
 	switch r.Method {
 	case "GET":
@@ -110,7 +190,7 @@ func (cluster *Cluster) handleCallback(w http.ResponseWriter, r *http.Request) {
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
 		cluster.renderHTMLError(w, userErrorMsg, http.StatusBadRequest)
-		log.Printf("handleCallback: no id_token in response: %q", token)
+		log.Printf("handleCallback: no id_token in response: %v", token)
 		return
 	}
 
@@ -138,7 +218,7 @@ func (cluster *Cluster) handleCallback(w http.ResponseWriter, r *http.Request) {
 	if cluster.Config.IDP_Ca_Pem != "" {
 		IdpCaPem = cluster.Config.IDP_Ca_Pem
 	} else if cluster.Config.IDP_Ca_Pem_File != "" {
-		content, err := ioutil.ReadFile(cluster.Config.IDP_Ca_Pem_File)
+		content, err := os.ReadFile(cluster.Config.IDP_Ca_Pem_File)
 		if err != nil {
 			log.Fatalf("Failed to load CA from file %s, %s", cluster.Config.IDP_Ca_Pem_File, err)
 		}
