@@ -55,9 +55,13 @@ The Web UI supports generating tokens against multiple cluster such as Dev / Sta
 
 ## Screen shots
 
-![Index Page](examples/index-page.png)
+![Index Page Light](examples/index-page-light.png)
 
-![Kubeconfig Page](examples/kubeconfig-page.png)
+![Index Page Dark](examples/index-page-dark.png)
+
+![Kubeconfig Page](examples/kubeconfig-page-light.png)
+
+![Kubeconfig Page](examples/kubeconfig-page-dark.png)
 
 
 ## Quick Start
@@ -75,6 +79,41 @@ docker run -p 5555:5555 -v $(pwd)/config.yml:/app/config.yml dex-k8s-authenticat
 go build -o bin/dex-k8s-authenticator dex-auth.go main.go templates.go
 ./bin/dex-k8s-authenticator --config config.yml
 ```
+
+### Using Helm
+
+1. **Prepare values file:**
+   ```bash
+   helm inspect values charts/dex-k8s-authenticator > dex-k8s-authenticator-values.yaml
+   ```
+
+2. **Edit `dex-k8s-authenticator-values.yaml`** with your cluster configuration:
+   ```yaml
+   dexK8sAuthenticator:
+     clusters:
+     - name: my-cluster
+       description: "My Kubernetes Cluster"
+       client_secret: "your-client-secret"
+       issuer: https://dex.example.com
+       k8s_master_uri: https://k8s.example.com
+       client_id: my-cluster
+       redirect_uri: https://login.example.com/callback/my-cluster
+   ```
+
+3. **Install the chart:**
+   ```bash
+   helm install dex-k8s-authenticator charts/dex-k8s-authenticator \
+     --namespace dex \
+     --create-namespace \
+     --values dex-k8s-authenticator-values.yaml
+   ```
+
+4. **Access the application** via Ingress (if enabled) or port-forward:
+   ```bash
+   kubectl port-forward -n dex svc/dex-k8s-authenticator 5555:5555
+   ```
+
+For more details, see [charts/README.md](charts/README.md).
 
 ## Contributing
 

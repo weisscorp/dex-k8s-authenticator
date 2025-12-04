@@ -2,13 +2,13 @@
 
 # Deploy environment label, e.g. dev, test, prod
 global:
-  deployEnv: dev
+  deployEnv: prod
 
 replicaCount: 1
 
 image:
-  repository: mintel/dex-k8s-authenticator
-  tag: 1.4.0
+  repository: weisscorp/dex-k8s-authenticator
+  tag: 2.1.0
   pullPolicy: Always
 
 imagePullSecrets: {}
