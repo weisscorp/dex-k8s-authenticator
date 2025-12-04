@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [v2.0.0]
+
+### Changed
+
+- Added the ability to pass the cluster certificate directly in the kubeconfig. Lens on macOS runs in its own environment and doesn’t have access to the certificate file.
+
 ## [v1.4.0]
 
 ### Changed
